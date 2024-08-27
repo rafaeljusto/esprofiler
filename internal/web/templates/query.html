@@ -1,0 +1,10 @@
+{{ define "query" }}
+<div class="esprofiler-block" title="{{ .Query.Took }} ::: {{ .Query.Type }} - {{ .Query.Description }}" style="width: {{ widthPercentage .Query.TimeInNanos .Took }}; background-color: {{ .Query.HexColor }}">
+  {{ if not .Query.Children }}
+    {{ .Query.Description }}
+  {{ end }}
+  {{ range $child := .Query.Children }}
+    {{ template "query" dict "Query" $child "Took" $.Took }}
+  {{ end }}
+</div>
+{{ end }}

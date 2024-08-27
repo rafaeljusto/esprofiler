@@ -1,0 +1,10 @@
+{{ define "collector" }}
+<div class="esprofiler-block" title="{{ .Collector.Took }} ::: {{ .Collector.Name }} - {{ .Collector.Reason }}" style="width: {{ widthPercentage .Collector.TimeInNanos .Took }}; background-color: {{ .Collector.HexColor }}">
+  {{ if not .Collector.Children }}
+    {{ .Collector.Name }}
+  {{ end }}
+  {{ range $child := .Collector.Children }}
+    {{ template "collector" dict "Collector" $child "Took" $.Took }}
+  {{ end }}
+</div>
+{{ end }}

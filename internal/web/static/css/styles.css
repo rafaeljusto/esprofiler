@@ -1,0 +1,11 @@
+.esprofiler-query {
+  height: 500px !important;
+}
+
+.esprofiler-block {
+  display: inline-block;
+  height: 30px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
