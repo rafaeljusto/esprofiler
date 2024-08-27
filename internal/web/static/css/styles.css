@@ -1,0 +1,17 @@
+code {
+  max-height: 400px;
+}
+
+h1 {
+  font-family: "Rubik Bubbles", system-ui;
+  font-weight: 400;
+  font-style: normal;
+}
+
+pre {
+  white-space: pre-wrap;
+}
+
+.esprofiler-query {
+  height: 500px !important;
+}
