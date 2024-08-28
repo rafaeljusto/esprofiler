@@ -3,6 +3,7 @@ package web
 import (
 	"bytes"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log/slog"
@@ -24,27 +25,22 @@ var staticContentHandler = http.FileServer(http.FS(staticContent))
 //go:embed templates/*
 var templateContent embed.FS
 var templates = template.Must(template.New("").Funcs(template.FuncMap{
-	"milliseconds": func(took int64) string {
-		return (time.Duration(took) * time.Millisecond).String()
-	},
-	"widthPercentage": func(timeInNanos, took int64) string {
-		return fmt.Sprintf("%.3f%%", float64(timeInNanos*100)/float64(took*1e+6))
-	},
-	"dict": func(values ...any) map[string]any {
-		if len(values)%2 != 0 {
-			panic("invalid dict call")
+	"buildD3Data": func(
+		search []parser.SearchQuery,
+		collector []parser.SearchCollector,
+	) string {
+		data := buildSearchD3Data(search)
+		data = append(data, buildCollectorD3Data(collector)...)
+		encodedData, err := json.Marshal(data)
+		if err != nil {
+			return ""
 		}
-		dict := make(map[string]any, len(values)/2)
-		for i := 0; i < len(values); i += 2 {
-			key, ok := values[i].(string)
-			if !ok {
-				panic("dict keys must be strings")
-			}
-			dict[key] = values[i+1]
-		}
-		return dict
+		return string(encodedData)
 	},
-}).ParseFS(templateContent, "templates/*.html"))
+	"add": func(a, b int64) int64 {
+		return a + b
+	},
+}).ParseFS(templateContent, "templates/*.gohtml"))
 
 var esClient = http.Client{
 	Timeout: 30 * time.Second,
@@ -98,6 +94,27 @@ func analyzeHandler(logger *slog.Logger) func(http.ResponseWriter, *http.Request
 		method = strings.ToUpper(method)
 		path = strings.TrimPrefix(path, "/")
 
+		var parsedQuery map[string]any
+		if err := json.Unmarshal([]byte(query), &parsedQuery); err != nil {
+			httpLogger.Error("failed to parse query",
+				slog.String("error", err.Error()),
+			)
+			http.Error(w, "failed to parse query", http.StatusBadRequest)
+			return
+		}
+		if _, ok := parsedQuery["profile"]; !ok {
+			parsedQuery["profile"] = true
+		}
+		queryRaw, err := json.Marshal(parsedQuery)
+		if err != nil {
+			httpLogger.Error("failed to encode query",
+				slog.String("error", err.Error()),
+			)
+			http.Error(w, "failed to encode query", http.StatusInternalServerError)
+			return
+		}
+		query = string(queryRaw)
+
 		esRequest, err := http.NewRequest(method, server+"/"+path, bytes.NewBufferString(query))
 		if err != nil {
 			httpLogger.Error("failed to create elasticsearch request",
@@ -133,12 +150,7 @@ func analyzeHandler(logger *slog.Logger) func(http.ResponseWriter, *http.Request
 			return
 		}
 
-		httpLogger.Debug("elasticsearch response",
-			slog.Int64("took", esResponseParsed.Took),
-			slog.Int("shards", len(esResponseParsed.Profile.Shards)),
-		)
-
-		if err := templates.ExecuteTemplate(w, "analyze.html", esResponseParsed); err != nil {
+		if err := templates.ExecuteTemplate(w, "analyze.gohtml", esResponseParsed); err != nil {
 			httpLogger.Error("failed to execute template",
 				slog.String("error", err.Error()),
 			)

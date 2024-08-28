@@ -1,11 +1,9 @@
-.esprofiler-query {
-  height: 500px !important;
+h1 {
+  font-family: "Rubik Bubbles", system-ui;
+  font-weight: 400;
+  font-style: normal;
 }
 
-.esprofiler-block {
-  display: inline-block;
-  height: 30px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.esprofiler-query {
+  height: 500px !important;
 }

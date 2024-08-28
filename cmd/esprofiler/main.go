@@ -20,7 +20,7 @@ func main() {
 	defer handleExit()
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
+		Level: slog.LevelInfo,
 	}))
 
 	config, errs := config.ParseFromEnvs()
