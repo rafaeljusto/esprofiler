@@ -14,7 +14,6 @@ import (
 
 	"github.com/rafaeljusto/esprofiler/internal/config"
 	"github.com/rafaeljusto/esprofiler/internal/web"
-	"go.uber.org/multierr"
 )
 
 func main() {
@@ -26,7 +25,7 @@ func main() {
 
 	config, errs := config.ParseFromEnvs()
 	if errs != nil {
-		for _, err := range multierr.Errors(errs) {
+		for _, err := range multierr(errs) {
 			logger.Error("failed to parse configuration",
 				slog.String("error", err.Error()),
 			)
@@ -103,4 +102,17 @@ func handleExit() {
 		}
 		panic(e)
 	}
+}
+
+// multierr unwraps multiple errors from a single error.
+//
+// https://pkg.go.dev/errors#Join
+func multierr(errs error) []error {
+	if errs == nil {
+		return nil
+	}
+	if multierr, ok := errs.(interface{ Unwrap() []error }); ok {
+		return multierr.Unwrap()
+	}
+	return []error{errs}
 }
