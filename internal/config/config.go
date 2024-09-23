@@ -1,11 +1,10 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
-
-	"go.uber.org/multierr"
 )
 
 // Config stores the configuration for the application.
@@ -22,7 +21,7 @@ func ParseFromEnvs() (*Config, error) {
 		var err error
 		config.Port, err = strconv.ParseInt(portStr, 10, 64)
 		if err != nil {
-			errs = multierr.Append(errs, fmt.Errorf("failed to parse ESPROFILER_PORT: %w", err))
+			errs = errors.Join(errs, fmt.Errorf("failed to parse ESPROFILER_PORT: %w", err))
 		}
 	}
 
