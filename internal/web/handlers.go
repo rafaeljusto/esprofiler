@@ -89,6 +89,8 @@ func analyzeHandler(logger *slog.Logger) func(http.ResponseWriter, *http.Request
 			http.Error(w, "query is required", http.StatusBadRequest)
 			return
 		}
+		username := r.FormValue("username")
+		password := r.FormValue("password")
 
 		server = strings.TrimSuffix(server, "/")
 		method = strings.ToUpper(method)
@@ -124,6 +126,10 @@ func analyzeHandler(logger *slog.Logger) func(http.ResponseWriter, *http.Request
 			return
 		}
 		esRequest.Header.Set("Content-Type", "application/json")
+
+		if username != "" && password != "" {
+			esRequest.SetBasicAuth(username, password)
+		}
 
 		esResponse, err := esClient.Do(esRequest)
 		if err != nil {
